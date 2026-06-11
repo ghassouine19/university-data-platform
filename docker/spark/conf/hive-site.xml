@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+
+
+
+<!-- HIVE METASTORE CONNECTION -->
+
+       <property>
+
+       <name>hive.metastore.uris</name>
+
+       <value>thrift://hive-metastore:9083</value>
+
+   </property>
+
+
+
+   <!-- WAREHOUSE LOCATION (MINIO) -->
+
+   <property>
+
+       <name>hive.metastore.warehouse.dir</name>
+
+       <value>s3a://university-analytics/warehouse/</value>
+
+   </property>
+
+
+
+   <!-- Obligatoire pour éviter que Spark n'essaie d'instancier un Metastore local -->
+
+   <property>
+
+       <name>hive.metastore.execute.setugi</name>
+
+       <value>true</value>
+
+   </property>
+
+
+
+</configuration>
