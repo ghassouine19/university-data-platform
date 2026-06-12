@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     MINIO_API_PORT: int = 9000
     MINIO_CONSOLE_PORT: int = 9001
 
-    # Vos 3 buckets de l'architecture en Médaillon
+    # Vos 5 buckets de l'architecture
     MINIO_RAW_BUCKET_WEB: str
     MINIO_RAW_BUCKET_JSON: str
     MINIO_RAW_BUCKET_IMAGES: str

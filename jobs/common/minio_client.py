@@ -46,7 +46,7 @@ class MinioStorageClient:
             return False
 
 #0000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    #on doit definit les methode d'upload ici pour centraliser le processus d'ingestion
+    #on doit definit les methodes d'upload ici pour centraliser le processus d'ingestion
     #par exemple
     """upload_json(data, bucket, object_name) : Reçoit un dictionnaire Python (vos données universitaires brutes fraîchement extraites d'une API),
      le convertit automatiquement en texte JSON et l'envoie directement dans la couche Bronze (raw/) de MinIO,

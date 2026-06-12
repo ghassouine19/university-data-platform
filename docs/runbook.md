@@ -74,3 +74,30 @@ docker compose --env-file .env.dev -f docker-compose.dev.yml up --build -d
 * 📉 **Business Intelligence (Metabase)** : `http://localhost:3000`
 
 ---
+
+---
+
+### Remarque : pour requirements-dev
+pour eviter les erreurs concernant l'appel des bibliotheque sur le code,
+On doit installer les bibliotheque necessaires en local,
+car ce qu'on a deja installee present sur le VM du docker et pas sur le local,
+pour ca vous allez voir les erreurs,
+alors la solution est :
+* **1- Creation du venv**
+```powershell
+python -m venv .venv
+```
+* **2-Activation du venv**
+```powershell
+.venv\Scripts\activate
+```
+* **3-Upgrade du pip**
+```powershell
+python -m pip install --upgrade pip
+```
+* **4-Installation des bibliotheques**
+```powershell
+pip install -r requirements-dev.txt
+```
+
+---
