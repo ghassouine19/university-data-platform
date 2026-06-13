@@ -54,6 +54,13 @@ if (-not (Test-Path $AwsSdkPath)) {
     Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar" -OutFile $AwsSdkPath
 }
 
+# F. Connecteur JDBC PostgreSQL (42.6.0)
+$PostgresJarPath = "$JarDir\optional\postgresql.jar"
+if (-not (Test-Path $PostgresJarPath)) {
+    Write-Host "-> Téléchargement de postgresql.jar..." -ForegroundColor Gray
+    Invoke-WebRequest -Uri "https://jdbc.postgresql.org/download/postgresql-42.7.3.jar" -OutFile $PostgresJarPath
+}
+
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "   Amorçage de l'infrastructure terminé avec succès !" -ForegroundColor Green
 Write-Host "   Exécutez la commande suivante pour compiler et tout lancer :" -ForegroundColor Green

@@ -57,6 +57,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - infrastructure_logs:/var/log/postgresql
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["postgres", "-c", "password_encryption=md5"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -65,7 +66,9 @@ services:
 
 
   # Hive Metastore (Catalog)
-
+  # ==========================================
+  # Hive Metastore (Catalog - CONFIGURATION DIRECTE ET STABLE)
+  # ==========================================
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: ${PROJECT_NAME}_hive_metastore
@@ -73,18 +76,37 @@ services:
       - university_network
     ports:
       - "${HIVE_METASTORE_PORT}:9083"
+
+    # Mode d'injection natif d'Apache Hive : Zéro script, Zéro échappement complexe
     environment:
-      - SERVICE_NAME=metastore
+      SERVICE_NAME: metastore
+      HADOOP_CLIENT_OPTS: -Xmx1G
+
+      # Injection automatique des propriétés de connexion
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://postgres:5432/hive_metastore_dev?createDatabaseIfNotExist=true"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionDriverName: "org.postgresql.Driver"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionUserName: "${POSTGRES_USER}"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionPassword: "${POSTGRES_PASSWORD}"
+
+      # Désactivation des vérifications strictes pour le dev local
+      HIVE_SITE_CONF_hive_metastore_schema_verification: "false"
+      HIVE_SITE_CONF_datanucleus_schema_autoCreateAll: "true"
+      HIVE_SITE_CONF_hive_metastore_warehouse_dir: "s3a://university-analytics/warehouse/"
+      HIVE_SITE_CONF_hive_metastore_execute_setugi: "true"
+
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+
     volumes:
-      - ./docker/spark/conf/hive-site.xml:/opt/hive/conf/hive-site.xml
+      # Nous n'avons plus besoin de générer ou de monter de fichier hive-site.xml !
+      # On injecte uniquement le pilote JDBC PostgreSQL d'origine
+      - ./docker/spark/jars/optional/postgresql.jar:/opt/hive/lib/postgresql.jar
 
+    # Utilisation de la commande native officielle d'Apache Hive
+    command: /opt/hive/bin/hive --service metastore
 
-  # Elasticsearch (Search Engine)
+    # Elasticsearch (Search Engine)
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
@@ -208,7 +230,6 @@ services:
         condition: service_healthy
       minio-bootstrap:
         condition: service_completed_successfully
-    command: python -m jobs.ingestion.run #il faut que le supprimer car on vas ajouter airflow
 
 
   # Search API (FastAPI)
