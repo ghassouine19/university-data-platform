@@ -1,0 +1,366 @@
+#structure générales :
+
+version: "3.8"
+
+networks:
+  university_network:
+    name: ${PROJECT_NAME}_network
+    driver: bridge
+
+volumes:
+  minio_data:
+  postgres_data:
+  elasticsearch_data:
+  infrastructure_logs:
+  airflow_logs:
+
+services:
+
+
+  # MINIO (Data Lake Storage)
+
+  minio:
+    image: minio/minio:latest
+    container_name: ${PROJECT_NAME}_minio
+    networks:
+      - university_network
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # PostgreSQL (Hive Metastore Backend)
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ${PROJECT_NAME}_postgres
+    networks:
+      - university_network
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - infrastructure_logs:/var/log/postgresql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["postgres", "-c", "password_encryption=md5"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # Hive Metastore (Catalog)
+  # ==========================================
+  # Hive Metastore (Catalog - CONFIGURATION DIRECTE ET STABLE)
+  # ==========================================
+  hive-metastore:
+    image: apache/hive:3.1.3
+    container_name: ${PROJECT_NAME}_hive_metastore
+    networks:
+      - university_network
+    ports:
+      - "${HIVE_METASTORE_PORT}:9083"
+
+    # Mode d'injection natif d'Apache Hive : Zéro script, Zéro échappement complexe
+    environment:
+      SERVICE_NAME: metastore
+      HADOOP_CLIENT_OPTS: -Xmx1G
+
+      # Injection automatique des propriétés de connexion
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://postgres:5432/hive_metastore_dev?createDatabaseIfNotExist=true"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionDriverName: "org.postgresql.Driver"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionUserName: "${POSTGRES_USER}"
+      HIVE_SITE_CONF_javax_jdo_option_ConnectionPassword: "${POSTGRES_PASSWORD}"
+
+      # Désactivation des vérifications strictes pour le dev local
+      HIVE_SITE_CONF_hive_metastore_schema_verification: "false"
+      HIVE_SITE_CONF_datanucleus_schema_autoCreateAll: "true"
+      HIVE_SITE_CONF_hive_metastore_warehouse_dir: "s3a://university-analytics/warehouse/"
+      HIVE_SITE_CONF_hive_metastore_execute_setugi: "true"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    volumes:
+      # Nous n'avons plus besoin de générer ou de monter de fichier hive-site.xml !
+      # On injecte uniquement le pilote JDBC PostgreSQL d'origine
+      - ./docker/spark/jars/optional/postgresql.jar:/opt/hive/lib/postgresql.jar
+
+    # Utilisation de la commande native officielle d'Apache Hive
+    command: /opt/hive/bin/hive --service metastore
+
+    # Elasticsearch (Search Engine)
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: ${PROJECT_NAME}_elasticsearch
+    networks:
+      - university_network
+    ports:
+      - "${ELASTIC_PORT}:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?local=true"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # Metabase (BI / Visualisation)
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: ${PROJECT_NAME}_metabase
+    networks:
+      - university_network
+    ports:
+      - "${METABASE_PORT}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+  # Spark Master
+
+  spark-master:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    container_name: ${PROJECT_NAME}_spark_master
+    networks:
+      - university_network
+    ports:
+      - "${SPARK_MASTER_PORT}:7077"
+      - "${SPARK_WEBUI_PORT}:8080"
+    environment:
+      SPARK_MODE: master
+      APP_ENV: ${APP_ENV}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./jobs:/opt/spark/jobs
+      - ./data/sample:/opt/spark/data/sample:ro
+      - ./data/mock:/opt/spark/data/mock
+      #le volume de logs est tres massive, on l'a suprime
+    depends_on:
+      minio:
+        condition: service_healthy
+      hive-metastore:
+        condition: service_started
+      minio-bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Spark Worker
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    container_name: ${PROJECT_NAME}_spark_worker
+    networks:
+      - university_network
+    ports:
+      - "8081:8081"
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      APP_ENV: ${APP_ENV}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      spark-master:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      hive-metastore:
+        condition: service_started
+
+
+  # Ingestion (Data Collection)
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: docker/ingestion/Dockerfile
+    container_name: ${PROJECT_NAME}_ingestion
+    networks:
+      - university_network
+    environment:
+      APP_ENV: ${APP_ENV}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./jobs:/app/jobs
+      - ./data/sample:/app/data/sample:ro
+      - ./data/mock:/app/data/mock
+      - ./logs/ingestion:/app/logs
+    depends_on:
+      minio:
+        condition: service_healthy
+      minio-bootstrap:
+        condition: service_completed_successfully
+
+
+  # Search API (FastAPI)
+
+  search-api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: ${PROJECT_NAME}_search_api
+    networks:
+      - university_network
+    ports:
+      - "${API_PORT}:8000"
+    environment:
+      APP_ENV: ${APP_ENV}
+      DEBUG: ${DEBUG}
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+    volumes:
+      - ./api:/app/api
+      - ./logs/api:/app/logs
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  minio-bootstrap:
+    image: minio/mc:latest
+    container_name: ${PROJECT_NAME}_minio_bootstrap
+
+    networks:
+      - university_network
+
+    depends_on:
+      minio:
+        condition: service_healthy
+
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+
+      mc mb --ignore-existing local/${MINIO_RAW_BUCKET_WEB};
+
+      mc mb --ignore-existing local/${MINIO_RAW_BUCKET_DOCUMENTS};
+
+      mc mb --ignore-existing local/${MINIO_RAW_BUCKET_IMAGES};
+      
+      mc mb --ignore-existing local/${MINIO_RAW_BUCKET_JSON};
+      
+      mc mb --ignore-existing local/${MINIO_RAW_BUCKET_LOGS};
+
+      echo 'MinIO bootstrap completed';
+      "
+
+ # Airflow Init (one-shot)
+  airflow-init:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    container_name: ${PROJECT_NAME}_airflow_init
+    networks:
+      - university_network
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      airflow db migrate &&
+      airflow users create --username ${AIRFLOW_ADMIN_USER} --password ${AIRFLOW_ADMIN_PASSWORD} --firstname Admin --lastname User --role Admin --email admin@university.local || true &&
+      echo 'Airflow init done'
+      "
+    restart: "no"
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    container_name: ${PROJECT_NAME}_airflow_scheduler
+    networks:
+      - university_network
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      SPARK_MASTER_URL: spark://spark-master:7077
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      APP_ENV: ${APP_ENV}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./jobs:/opt/airflow/jobs
+      - airflow_logs:/opt/airflow/logs
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      spark-master:
+        condition: service_healthy
+    command: scheduler
+
+  # Airflow Webserver
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    container_name: ${PROJECT_NAME}_airflow_webserver
+    networks:
+      - university_network
+    ports:
+      - "${AIRFLOW_PORT}:8080"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5

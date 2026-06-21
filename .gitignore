@@ -1,0 +1,58 @@
+.env
+.env.dev
+.env.prod
+
+# Ignorer les journaux d'exécution locaux (Ingestion, Spark, Airflow, API)
+logs/**/*.log
+logs/**/*.zip
+logs/ingestion/*
+logs/transformation/*
+logs/api/*
+logs/orchestration/*
+
+# Ignorer les JARs téléchargés par le script bootstrap.ps1 (interdit sur GitHub)
+*.jar
+docker/spark/jars/**/*.jar
+
+# Ignorer l'archive tarball Spark téléchargée localement pour Airflow
+docker/airflow/*.tgz
+docker/airflow/*.tar.gz
+
+# Environnements virtuels locaux (si un membre de l'équipe en crée un)
+.venv/
+venv/
+ENV/
+env/
+
+# Caches de compilation Python et fichiers d'exécution
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Fichiers système Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Fichiers de configuration des éditeurs de code
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+#conservation des dossiers vides
+!airflow/dags/.gitkeep
+!api/.gitkeep
+!configs/.gitkeep
+!data/*/.gitkeep
+!jobs/*/.gitkeep
+!logs/*/.gitkeep
+!tests/.gitkeep
+
