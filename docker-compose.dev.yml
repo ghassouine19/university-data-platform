@@ -215,6 +215,8 @@ services:
     container_name: ${PROJECT_NAME}_ingestion
     networks:
       - university_network
+    env_file:
+      - .env.dev
     environment:
       APP_ENV: ${APP_ENV}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
