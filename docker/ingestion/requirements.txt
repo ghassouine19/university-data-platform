@@ -44,3 +44,6 @@ loguru>=0.7.0
 
 
 pypdf>=4.0.0
+
+
+playwright==1.44.0
