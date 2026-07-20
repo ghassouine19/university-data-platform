@@ -1,4 +1,6 @@
 # jobs/common/metadata.py
+from array import ArrayType
+
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType, ArrayType
 
 # ==============================================================================
@@ -51,14 +53,13 @@ BRONZE_API_METADATA_SCHEMA = StructType([
 # B. Schéma d'entrée complet pour l'API Crossref (Structure imbriquée de votre analyse)
 BRONZE_CROSSREF_INPUT_SCHEMA = StructType([
     StructField("message", StructType([
-        StructField("total-results", IntegerType(), True),
         StructField("items", ArrayType(StructType([
             StructField("title", ArrayType(StringType()), True),
             StructField("URL", StringType(), True),
             StructField("type", StringType(), True),
             StructField("language", StringType(), True),
             StructField("is-referenced-by-count", IntegerType(), True),
-            StructField("short-container-title", ArrayType(StringType()), True),
+            StructField("container-title", ArrayType(StringType()), True),
             # Imbrication de la date Crossref (date-parts: [[2023, 3, 14]])
             StructField("published", StructType([
                 StructField("date-parts", ArrayType(ArrayType(IntegerType())), True)
@@ -67,9 +68,6 @@ BRONZE_CROSSREF_INPUT_SCHEMA = StructType([
             StructField("author", ArrayType(StructType([
                 StructField("given", StringType(), True),
                 StructField("family", StringType(), True),
-                StructField("affiliation", ArrayType(StructType([
-                    StructField("name", StringType(), True)
-                ]), True), True)
             ]), True), True)
         ]), True), True)
     ]), True)
@@ -118,5 +116,62 @@ BRONZE_OPENALEX_INPUT_SCHEMA = StructType([
     # Imbrication Open Access
     StructField("open_access", StructType([
         StructField("is_oa", BooleanType(), True)
+    ]), True)
+])
+
+
+# ==============================================================================
+# SCHÉMA BRONZE (ENTRÉE) : POUR LES PROFILS CHERCHEURS INDIVIDUELS ORCID
+# ==============================================================================
+
+BRONZE_ORCID_INPUT_SCHEMA = StructType([
+    # 1. Identifiant Unique ORCID (orcid-identifier -> path)
+    StructField("orcid-identifier", StructType([
+        StructField("path", StringType(), True),
+        StructField("uri", StructType(), True)
+    ]), True),
+
+    # 2. Données Personnelles du Chercheur (person -> name, emails, biography, addresses)
+    StructField("person", StructType([
+        # Nom et Prénom (name -> given-names/family-name -> value)
+        StructField("name", StructType([
+            StructField("given-names", StructType([StructField("value", StringType(), True)]), True),
+            StructField("family-name", StructType([StructField("value", StringType(), True)]), True)
+        ]), True),
+        # Liste des Emails (emails -> email -> [ {value: ...} ])
+        StructField("emails", StructType([
+            StructField("email", ArrayType(StructType([
+                StructField("value", StringType(), True)
+            ]), True), True)
+        ]), True),
+        # Biographie / Description (biography -> content)
+        StructField("biography", StructType([
+            StructField("content", StringType(), True)
+        ]), True),
+        # Liste des Adresses pour le pays (addresses -> address -> [ {country: {value: "MA"}} ])
+        StructField("addresses", StructType([
+            StructField("address", ArrayType(StructType([
+                StructField("country", StructType([
+                    StructField("value", StringType(), True)
+                ]), True)
+            ]), True), True)
+        ]), True)
+    ]), True),
+
+    # 3. Activités et Affiliations Académiques (activities-summary -> employments -> ...)
+    StructField("activities-summary", StructType([
+        StructField("employments", StructType([
+            StructField("affiliation-group", ArrayType(StructType([
+                StructField("summaries", ArrayType(StructType([
+                    # Département et Rôle occupé (ex: Professor)
+                    StructField("department-name", StringType(), True),
+                    StructField("role-title", StringType(), True),
+                    # Organisation de rattachement (organization -> name: "Hassan II University")
+                    StructField("organization", StructType([
+                        StructField("name", StringType(), True)
+                    ]), True)
+                ]), True), True)
+            ]), True), True)
+        ]), True)
     ]), True)
 ])
