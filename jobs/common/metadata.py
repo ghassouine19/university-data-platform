@@ -1,6 +1,4 @@
 # jobs/common/metadata.py
-from array import ArrayType
-
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType, ArrayType
 
 # ==============================================================================
@@ -124,7 +122,7 @@ BRONZE_ORCID_INPUT_SCHEMA = StructType([
     # 1. Identifiant Unique ORCID (orcid-identifier -> path)
     StructField("orcid-identifier", StructType([
         StructField("path", StringType(), True),
-        StructField("uri", StructType(), True)
+        StructField("uri", StringType(), True)
     ]), True),
 
     # 2. Données Personnelles du Chercheur (person -> name, emails, biography, addresses)
@@ -171,3 +169,15 @@ BRONZE_ORCID_INPUT_SCHEMA = StructType([
         ]), True)
     ]), True)
 ])
+
+
+#les clè métier
+BUSINESS_KEYS = {
+
+    "research_publications": ["doi"],
+
+    "faculty_profiles": ["orcid"],
+
+    "documents_registry": ["payload_checksum"]
+
+}
