@@ -87,11 +87,7 @@ BRONZE_OPENALEX_INPUT_SCHEMA = StructType([
     # Imbrication du journal (primary_location -> source -> display_name)
     StructField("primary_location", StructType([
         StructField("source", StructType([
-            StructField("display_name", StringType(), True)
-        ]), True)
-    ]), True),
-    StructField("primary_location", StructType([
-        StructField("source", StructType([
+            StructField("display_name", StringType(), True),
             StructField("issn_l", StringType(), True)
         ]), True)
     ]), True),
