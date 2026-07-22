@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     MINIO_RAW_BUCKET_IMAGES: str
     MINIO_RAW_BUCKET_DOCUMENTS: str
     MINIO_RAW_BUCKET_LOGS: str
+    MINIO_CURATED_BUCKET: str
 
     # ==========================================
     # DATABASE & CATALOG (POSTGRESQL & HIVE)
@@ -64,6 +65,8 @@ class Settings(BaseSettings):
     # MOTEUR DE RECHERCHE & ORCHESTRATION
     # ==========================================
     ELASTIC_PORT: int = 9200
+    ELASTIC_USER: str
+    ELASTIC_PASSWORD: str
     AIRFLOW_PORT: int = 8082
 
     # ==========================================

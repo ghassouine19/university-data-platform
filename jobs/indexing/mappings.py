@@ -186,3 +186,23 @@ INDEX_MAPPINGS = {
     }
 
 }
+
+def create_indices():
+    """
+    Crée les index Elasticsearch s'ils n'existent pas.
+    """
+
+    es = ElasticsearchClient.get_client()
+
+    for index_name, mapping in INDEX_MAPPINGS.items():
+
+        if es.indices.exists(index=index_name):
+            logger.info(f"Index '{index_name}' existe déjà.")
+            continue
+
+        es.indices.create(
+            index=index_name,
+            body=mapping
+        )
+
+        logger.success(f"Index '{index_name}' créé.")

@@ -154,16 +154,20 @@ services:
     ports:
       - "${SPARK_MASTER_PORT}:7077"
       - "${SPARK_WEBUI_PORT}:8080"
+    env_file:
+      - .env.dev
     environment:
       SPARK_MODE: master
       APP_ENV: ${APP_ENV}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      PYTHONPATH: /opt/spark/jobs
     volumes:
       - ./jobs:/opt/spark/jobs
       - ./data/sample:/opt/spark/data/sample:ro
       - ./data/mock:/opt/spark/data/mock
+      - ./.env.dev:/opt/spark/.env.dev:ro
       #le volume de logs est tres massive, on l'a suprime
     depends_on:
       minio:
@@ -197,6 +201,8 @@ services:
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 2G
     depends_on:
       spark-master:
         condition: service_healthy
@@ -232,7 +238,7 @@ services:
         condition: service_healthy
       minio-bootstrap:
         condition: service_completed_successfully
-
+    command: tail -f /dev/null
 
   # Search API (FastAPI)
 
@@ -283,6 +289,8 @@ services:
       mc mb --ignore-existing local/${MINIO_RAW_BUCKET_JSON};
       
       mc mb --ignore-existing local/${MINIO_RAW_BUCKET_LOGS};
+      
+      mc mb --ignore-existing local/${MINIO_CURATED_BUCKET};
 
       echo 'MinIO bootstrap completed';
       "

@@ -1,5 +1,5 @@
 # jobs/common/metadata.py
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType, ArrayType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType, ArrayType, DateType, TimestampType
 
 # ==============================================================================
 # 📥 1. SCHÉMAS BRONZE (ENTRÉE) : POUR LES FICHIERS DE MÉTADONNÉES D'AUDIT
@@ -170,11 +170,40 @@ BRONZE_ORCID_INPUT_SCHEMA = StructType([
     ]), True)
 ])
 
+# ==============================================================================
+#  SCHÉMA SILVER (SORTIE) : research_publications
+# ==============================================================================
+# Schéma unifié cible après fusion OpenAlex + Crossref, utilisé pour valider
+# le DataFrame final avant écriture Hudi (transform_publications.py).
+SILVER_PUBLICATIONS_SCHEMA = StructType([
+    StructField("publication_id", StringType(), False),
+    StructField("doi", StringType(), True),
+    StructField("title", StringType(), True),
+    StructField("publication_year", IntegerType(), True),
+    StructField("publication_date", DateType(), True),
+    StructField("language", StringType(), True),
+    StructField("normalized_text", StringType(), True),
+    StructField("journal_name", StringType(), True),
+    StructField("publication_type", StringType(), True),
+    StructField("authors", ArrayType(StringType()), True),
+    StructField("university_name", StringType(), True),
+    StructField("primary_topic", StringType(), True),
+    StructField("subfield", StringType(), True),
+    StructField("field", StringType(), True),
+    StructField("domain", StringType(), True),
+    StructField("is_open_access", BooleanType(), True),
+    StructField("cited_by_count", IntegerType(), True),
+    StructField("record_id", StringType(), True),           # issu des métadonnées
+    StructField("crawl_timestamp", StringType(), True),
+    StructField("payload_checksum", StringType(), True),
+    StructField("last_updated_timestamp", TimestampType(), True)
+])
+
 
 #les clè métier
 BUSINESS_KEYS = {
 
-    "research_publications": ["doi"],
+    "research_publications": ["publication_id"],
 
     "faculty_profiles": ["orcid"],
 
