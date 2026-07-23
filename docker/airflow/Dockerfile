@@ -22,8 +22,18 @@ RUN tar -xz -C /opt/ -f /tmp/spark.tgz \
     && chown -R airflow:root "${SPARK_HOME}" \
     && rm /tmp/spark.tgz
 
+# 3b. JARs de connecteurs — mêmes fichiers que docker/spark/Dockerfile.
+# SparkSubmitOperator exécute spark-submit localement dans CE conteneur
+# (le driver tourne ici), donc il lui faut aussi S3A/Hudi/Elasticsearch,
+# même si l'exécution distribuée se fait sur le vrai cluster spark-master.
+COPY docker/spark/jars/hadoop-aws/*.jar /opt/spark/jars/
+COPY docker/spark/jars/aws-sdk/*.jar /opt/spark/jars/
+COPY docker/spark/jars/hudi/*.jar /opt/spark/jars/
+COPY docker/spark/jars/elasticsearch/*.jar /opt/spark/jars/
+RUN chown -R airflow:root /opt/spark/jars
+
 USER airflow
 
 # 4. Python dependencies
 COPY docker/airflow/requirements.txt /tmp/airflow-requirements.txt
-RUN pip install --no-cache-dir -r /tmp/airflow-requirements.txt
+RUN pip install --no-cache-dir -r /tmp/airflow-requirements.txt apache-airflow-providers-apache-spark==4.7.1

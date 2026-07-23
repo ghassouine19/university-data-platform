@@ -326,6 +326,8 @@ services:
     container_name: ${PROJECT_NAME}_airflow_scheduler
     networks:
       - university_network
+    env_file:
+      - .env.dev
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
       AIRFLOW__CORE__EXECUTOR: LocalExecutor

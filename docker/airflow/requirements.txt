@@ -2,3 +2,5 @@ apache-airflow-providers-apache-spark==4.7.1
 apache-airflow-providers-amazon==8.19.0
 boto3
 pyspark==3.5.2
+loguru==0.7.3
+pydantic-settings>=2.0
