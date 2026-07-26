@@ -162,7 +162,13 @@ services:
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
-      PYTHONPATH: /opt/spark/jobs
+      PYTHONPATH: /opt/spark
+      SPARK_DAEMON_MEMORY: 1g            # mémoire du processus master lui-même
+      SPARK_EXECUTOR_MEMORY: 4g
+      SPARK_EXECUTOR_CORES: 2
+      SPARK_NETWORK_TIMEOUT: 600s
+      SPARK_EXECUTOR_HEARTBEATINTERVAL: 60s
+      SPARK_SQL_SHUFFLE_PARTITIONS: 200
     volumes:
       - ./jobs:/opt/spark/jobs
       - ./data/sample:/opt/spark/data/sample:ro
@@ -201,8 +207,12 @@ services:
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
-      SPARK_WORKER_CORES: 2
-      SPARK_WORKER_MEMORY: 2G
+      SPARK_WORKER_CORES: 4
+      SPARK_WORKER_MEMORY: 6G
+      PYTHONPATH: /opt/spark
+    mem_limit: 8g
+    volumes:
+      - ./jobs:/opt/spark/jobs
     depends_on:
       spark-master:
         condition: service_healthy
@@ -211,6 +221,35 @@ services:
       hive-metastore:
         condition: service_started
 
+  spark-worker-2:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    container_name: ${PROJECT_NAME}_spark_worker_2
+    networks:
+      - university_network
+    ports:
+      - "8083:8081"
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      APP_ENV: ${APP_ENV}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      SPARK_WORKER_CORES: 4
+      SPARK_WORKER_MEMORY: 6G
+      PYTHONPATH: /opt/spark
+    mem_limit: 8g
+    volumes:
+      - ./jobs:/opt/spark/jobs
+    depends_on:
+      spark-master:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      hive-metastore:
+        condition: service_started
 
   # Ingestion (Data Collection)
 
@@ -323,6 +362,7 @@ services:
     build:
       context: .
       dockerfile: docker/airflow/Dockerfile
+    user: root
     container_name: ${PROJECT_NAME}_airflow_scheduler
     networks:
       - university_network
@@ -338,10 +378,21 @@ services:
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       APP_ENV: ${APP_ENV}
+      SPARK_DRIVER_MEMORY: 2g
+      SPARK_EXECUTOR_MEMORY: 4g          # doit correspondre à SPARK_WORKER_MEMORY
+      SPARK_EXECUTOR_CORES: 2
+      SPARK_NETWORK_TIMEOUT: 600s
+      SPARK_EXECUTOR_HEARTBEATINTERVAL: 60s
+      SPARK_SQL_SHUFFLE_PARTITIONS: 200
+    mem_limit: 4g
     volumes:
+      - ./jobs:/opt/spark/jobs
       - ./airflow/dags:/opt/airflow/dags
       - ./jobs:/opt/airflow/jobs
       - airflow_logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.env.dev:/opt/airflow/.env.dev
+      - ./docker-compose.dev.yml:/opt/airflow/docker-compose.dev.yml
     depends_on:
       airflow-init:
         condition: service_completed_successfully

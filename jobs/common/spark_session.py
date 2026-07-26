@@ -27,6 +27,8 @@ def get_spark_session(app_name: str) -> SparkSession:
             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.hudi.catalog.HoodieCatalog")
             .config("spark.kryo.registrator", "org.apache.spark.HoodieSparkKryoRegistrar")
             .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+            #.config("spark.serializer", "org.apache.spark.serializer.JavaSerializer")
+
 
             # 4. Paramètres d'optimisation complémentaires (Hadoop S3A)
             .config("spark.hadoop.fs.s3a.endpoint", settings.MINIO_ENDPOINT)

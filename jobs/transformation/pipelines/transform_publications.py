@@ -54,6 +54,10 @@ def _normalize_openalex(df, obj_col="r"):
 
 def transform_publications():
     spark = get_spark_session("Publications_Silver_Final")
+    print("=" * 80)
+    print("serializer =", spark.sparkContext.getConf().get("spark.serializer"))
+    print("registrator =", spark.sparkContext.getConf().get("spark.kryo.registrator"))
+    print("=" * 80)
 
     bucket = settings.MINIO_RAW_BUCKET_JSON
     base_path = f"s3a://{bucket}/openalex/"

@@ -32,6 +32,9 @@ COPY docker/spark/jars/hudi/*.jar /opt/spark/jars/
 COPY docker/spark/jars/elasticsearch/*.jar /opt/spark/jars/
 RUN chown -R airflow:root /opt/spark/jars
 
+RUN apt-get update && \
+    apt-get install -y docker-compose-plugin
+
 USER airflow
 
 # 4. Python dependencies
