@@ -10,7 +10,7 @@ es = Elasticsearch(
 )
 
 @router.get("/search")
-def search(q: str, size: int = 10):
+def search(q: str, size: int = 100):
 
     response = es.search(
         index="research_publications",
