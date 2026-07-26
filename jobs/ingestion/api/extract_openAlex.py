@@ -11,7 +11,7 @@ HEADERS = {
 PER_PAGE = 200
 
 
-def fetch_openalex_publications(institution_id: str):
+def fetch_openalex_publications(institution_id: str, limit: int | None = None):
     """
     Récupère toutes les publications d'une université OpenAlex.
 
@@ -27,6 +27,7 @@ def fetch_openalex_publications(institution_id: str):
     """
 
     cursor = "*"
+    yielded = 0
 
     while True:
 
@@ -54,6 +55,10 @@ def fetch_openalex_publications(institution_id: str):
 
         for publication in results:
             yield publication
+            yielded += 1
+
+            if limit is not None and yielded >= limit:
+                return
 
         next_cursor = payload["meta"].get("next_cursor")
 

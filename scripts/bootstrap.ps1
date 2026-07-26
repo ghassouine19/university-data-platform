@@ -14,6 +14,7 @@ New-Item -ItemType Directory -Force -Path "$JarDir\hadoop-aws" | Out-Null
 New-Item -ItemType Directory -Force -Path "$JarDir\aws-sdk" | Out-Null
 New-Item -ItemType Directory -Force -Path "$JarDir\hudi" | Out-Null
 New-Item -ItemType Directory -Force -Path "$JarDir\elasticsearch" | Out-Null
+New-Item -ItemType Directory -Force -Path "$JarDir\optional" | Out-Null
 New-Item -ItemType Directory -Force -Path $AirflowDir | Out-Null
 
 # 2. Téléchargement des dépendances Java (JARs) et de l'archive Spark (.tgz)

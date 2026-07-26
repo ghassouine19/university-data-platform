@@ -379,6 +379,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       APP_ENV: ${APP_ENV}
       SPARK_DRIVER_MEMORY: 2g
+      PYTHONPATH: /opt/airflow
       SPARK_EXECUTOR_MEMORY: 4g          # doit correspondre à SPARK_WORKER_MEMORY
       SPARK_EXECUTOR_CORES: 2
       SPARK_NETWORK_TIMEOUT: 600s
@@ -415,6 +416,7 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      PYTHONPATH: /opt/airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs

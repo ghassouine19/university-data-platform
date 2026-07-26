@@ -13,7 +13,7 @@ def compute_checksum(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def run_openalex_ingestion(institution_id: str):
+def run_openalex_ingestion(institution_id: str, limit: int | None = None):
     """
     Extraction des publications OpenAlex et stockage
     dans la Bronze Zone (Raw JSON).
@@ -37,7 +37,7 @@ def run_openalex_ingestion(institution_id: str):
 
     client = MinioStorageClient()
 
-    for publication in fetch_openalex_publications(institution_id):
+    for publication in fetch_openalex_publications(institution_id, limit=limit):
 
         try:
 
@@ -383,5 +383,5 @@ def run_all_ingestion():
     logger.info("=" * 80)
 
 if __name__ == "__main__":
-    run_all_ingestion()
-
+    # run_all_ingestion()
+    run_openalex_ingestion(institution_id="I99297268", limit=5)

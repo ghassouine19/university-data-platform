@@ -4,8 +4,8 @@ University Publications Pipeline
 ==================================
 clean_minio
   >> extract_openalex
-  >> transform_publications   (via docker exec spark-master)
-  >> index_publications       (via docker exec spark-master)
+  >> transform_publications
+  >> index_publications
   >> done
 """
 
@@ -26,10 +26,9 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# Container spark-master
-SPARK_CONTAINER = "university-data-platform_spark_master"
-SPARK_SUBMIT    = "/opt/spark/bin/spark-submit"
-JOBS_ROOT       = "/opt/spark/jobs"
+SPARK_SUBMIT   = "/home/airflow/.local/bin/spark-submit"
+JOBS_ROOT      = "/opt/airflow/jobs"
+PYSPARK_PYTHON = "/home/airflow/.local/bin/python3"
 
 SPARK_CONF = (
     "--master local[2] "
@@ -47,17 +46,34 @@ SPARK_CONF = (
 )
 
 
+def _spark_env():
+    return {
+        "PYTHONPATH":            "/opt/airflow",
+        "PYSPARK_PYTHON":        PYSPARK_PYTHON,
+        "PYSPARK_DRIVER_PYTHON": PYSPARK_PYTHON,
+        "AWS_ACCESS_KEY_ID":     os.environ.get("MINIO_ROOT_USER", ""),
+        "AWS_SECRET_ACCESS_KEY": os.environ.get("MINIO_ROOT_PASSWORD", ""),
+        "MINIO_ENDPOINT":        os.environ.get("MINIO_ENDPOINT", "http://minio:9000"),
+        "MINIO_ROOT_USER":       os.environ.get("MINIO_ROOT_USER", ""),
+        "MINIO_ROOT_PASSWORD":   os.environ.get("MINIO_ROOT_PASSWORD", ""),
+        "MINIO_RAW_BUCKET_JSON": os.environ.get("MINIO_RAW_BUCKET_JSON", "raw-json-dev"),
+        "MINIO_CURATED_BUCKET":  os.environ.get("MINIO_CURATED_BUCKET", "curated"),
+        "ELASTIC_HOST":          "http://elasticsearch:9200",
+        "APP_ENV":               os.environ.get("APP_ENV", "dev"),
+    }
+
+
 def _clean_minio():
     """Vide le bucket raw-json-dev/openalex/ avant chaque run."""
     import boto3
     from botocore.client import Config
     from jobs.common.logger import logger
 
-    endpoint = os.environ.get("MINIO_ENDPOINT", "http://minio:9000")
-    user     = os.environ.get("MINIO_ROOT_USER", "")
-    password = os.environ.get("MINIO_ROOT_PASSWORD", "")
-    bucket   = os.environ.get("MINIO_RAW_BUCKET_JSON", "raw-json-dev")
-    prefix   = "openalex/"
+    endpoint  = os.environ.get("MINIO_ENDPOINT", "http://minio:9000")
+    user      = os.environ.get("MINIO_ROOT_USER", "")
+    password  = os.environ.get("MINIO_ROOT_PASSWORD", "")
+    bucket    = os.environ.get("MINIO_RAW_BUCKET_JSON", "raw-json-dev")
+    prefix    = "openalex/"
 
     logger.info(f"🧹 Nettoyage MinIO : s3://{bucket}/{prefix}")
 
@@ -91,7 +107,9 @@ def _run_openalex():
     logger.info("=" * 60)
     logger.info("🚀 EXTRACT OPENALEX START")
     logger.info("=" * 60)
+
     run_openalex_ingestion(institution_id="I99297268", limit=5)
+
     logger.success("✅ EXTRACT OPENALEX DONE")
 
 
@@ -118,28 +136,28 @@ with DAG(
         python_callable=_run_openalex,
     )
 
-    # 2. Transformation Spark via docker exec -> spark-master
+    # 2. Transformation Spark -> Hudi
     transform_publications = BashOperator(
         task_id="transform_publications",
         bash_command=(
             f"echo '🔄 START transform_publications' && "
-            f"docker exec {SPARK_CONTAINER} "
-            f"bash -c 'PYTHONPATH={JOBS_ROOT} {SPARK_SUBMIT} {SPARK_CONF}"
-            f"{JOBS_ROOT}/transformation/pipelines/transform_publications.py' && "
+            f"{SPARK_SUBMIT} {SPARK_CONF}"
+            f"{JOBS_ROOT}/transformation/pipelines/transform_publications.py && "
             f"echo '✅ DONE transform_publications'"
         ),
+        env=_spark_env(),
     )
 
-    # 3. Indexation Elasticsearch via docker exec -> spark-master
+    # 3. Indexation Elasticsearch
     index_publications = BashOperator(
         task_id="index_publications",
         bash_command=(
             f"echo '🔄 START index_publications' && "
-            f"docker exec {SPARK_CONTAINER} "
-            f"bash -c 'PYTHONPATH={JOBS_ROOT} {SPARK_SUBMIT} {SPARK_CONF}"
-            f"{JOBS_ROOT}/indexing/index_publications.py' && "
+            f"{SPARK_SUBMIT} {SPARK_CONF}"
+            f"{JOBS_ROOT}/indexing/index_publications.py && "
             f"echo '✅ DONE index_publications'"
         ),
+        env=_spark_env(),
     )
 
     done = EmptyOperator(task_id="done")
