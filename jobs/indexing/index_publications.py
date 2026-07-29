@@ -6,7 +6,7 @@ for _parent in Path(__file__).resolve().parents:
         sys.path.insert(0, str(_parent))
         break
 else:
-    raise RuntimeError("❌ Impossible de localiser le dossier 'jobs/'.")
+    raise RuntimeError("Impossible de localiser le dossier 'jobs/'.")
 
 
 from jobs.common.spark_session import get_spark_session

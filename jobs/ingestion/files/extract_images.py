@@ -134,9 +134,7 @@ class MinioStorageClient:
             return False
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # HELPERS — URLs et réseau
-# ─────────────────────────────────────────────────────────────────────────────
 
 def is_dns_error(exc: Exception) -> bool:
     msg = str(exc).lower()
@@ -259,10 +257,7 @@ def extract_links_and_images(html_content: str, page_url: str) -> tuple[list[str
     return page_links, image_links
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # CORE — Crawl + ingestion images (BFS) pour une faculté
-# ─────────────────────────────────────────────────────────────────────────────
-
 def download_and_upload_image(
     minio: MinioStorageClient, image_url: str, faculty_slug: str, run_date: str,
     visited: set, hash_manifest: Dict[str, str],
@@ -386,10 +381,7 @@ def crawl_faculty_images(minio: MinioStorageClient, faculty_slug: str, seed_url:
     return {**stats, "faculty": faculty_slug, "status": "completed"}
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # ENTRY POINT
-# ─────────────────────────────────────────────────────────────────────────────
-
 def run(faculty_slug: Optional[str] = None) -> Dict[str, Any]:
     """
     Lance l'extraction d'images.

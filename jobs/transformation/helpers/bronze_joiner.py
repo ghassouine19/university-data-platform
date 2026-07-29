@@ -1,4 +1,3 @@
-# jobs/transformation/helpers/bronze_joiner.py
 from pyspark.sql import DataFrame
 from jobs.common.logger import logger
 
@@ -16,9 +15,9 @@ def join_raw_with_metadata(raw_df: DataFrame, meta_df: DataFrame, how: str = "in
     """
     overlapping = (set(raw_df.columns) & set(meta_df.columns)) - {"_file_key"}
     if overlapping:
-        logger.info(f"⚠️ Colonnes en conflit raw/metadata écartées côté metadata : {sorted(overlapping)}")
+        logger.info(f"Colonnes en conflit raw/metadata écartées côté metadata : {sorted(overlapping)}")
         meta_df = meta_df.drop(*overlapping)
 
-    logger.info(f"🔗 Fusion raw + metadata sur '_file_key' (how='{how}')...")
+    logger.info(f"Fusion raw + metadata sur '_file_key' (how='{how}')...")
     joined_df = raw_df.join(meta_df, on="_file_key", how=how)
     return joined_df.drop("_file_key")

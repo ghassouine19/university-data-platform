@@ -57,7 +57,7 @@ def write_hudi(
         enable_hive_sync=enable_hive_sync,
     )
 
-    logger.info(f"🧾 Hudi write: {database}.{table_name} -> {base_path}")
+    logger.info(f"Hudi write: {database}.{table_name} -> {base_path}")
     (
         df.write
         .format("hudi")
@@ -65,4 +65,4 @@ def write_hudi(
         .mode(mode)
         .save(base_path)
     )
-    logger.success(f"✅ Hudi write terminé: {database}.{table_name}")
+    logger.success(f"Hudi write terminé: {database}.{table_name}")

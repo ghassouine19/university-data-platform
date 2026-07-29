@@ -45,7 +45,6 @@ class MinioStorageClient:
             logger.error(f"Échec de la connexion à MinIO : {e}")
             return False
 
-#0000000000000000000000000000000000000000000000000000000000000000000000000000000000
     #on doit definit les methodes d'upload ici pour centraliser le processus d'ingestion
     #par exemple
     """upload_json(data, bucket, object_name) : Reçoit un dictionnaire Python (vos données universitaires brutes fraîchement extraites d'une API),

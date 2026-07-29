@@ -20,7 +20,7 @@ def run_openalex_ingestion(institution_id: str):
     """
 
     logger.info("=" * 70)
-    logger.info("🚀 OPENALEX INGESTION START")
+    logger.info("OPENALEX INGESTION START")
     logger.info("=" * 70)
 
     target_bucket = settings.MINIO_RAW_BUCKET_JSON
@@ -130,7 +130,7 @@ def run_openalex_ingestion(institution_id: str):
 def run_crossref_ingestion():
 
     logger.info("=" * 70)
-    logger.info("🚀 CROSSREF INGESTION START")
+    logger.info("CROSSREF INGESTION START")
     logger.info("=" * 70)
 
     target_bucket = settings.MINIO_RAW_BUCKET_JSON
@@ -238,7 +238,7 @@ def run_crossref_ingestion():
 def run_orcid_ingestion():
 
         logger.info("=" * 70)
-        logger.info("🚀 ORCID INGESTION START")
+        logger.info("ORCID INGESTION START")
         logger.info("=" * 70)
 
         target_bucket = settings.MINIO_RAW_BUCKET_JSON
@@ -349,7 +349,7 @@ def run_all_ingestion():
     """
 
     logger.info("=" * 80)
-    logger.info("🚀 START API INGESTION PIPELINE")
+    logger.info("START API INGESTION PIPELINE")
     logger.info("=" * 80)
 
     try:
@@ -364,22 +364,22 @@ def run_all_ingestion():
 
     try:
         # CrossRef
-        logger.info("📖 CrossRef ingestion...")
+        logger.info("CrossRef ingestion...")
         run_crossref_ingestion()
 
     except Exception as e:
-        logger.exception(f"❌ CrossRef failed : {e}")
+        logger.exception(f"CrossRef failed : {e}")
 
     try:
         # ORCID
-        logger.info("👨‍🔬 ORCID ingestion...")
+        logger.info("ORCID ingestion...")
         run_orcid_ingestion()
 
     except Exception as e:
-        logger.exception(f"❌ ORCID failed : {e}")
+        logger.exception(f"ORCID failed : {e}")
 
     logger.info("=" * 80)
-    logger.success("🎉 API INGESTION PIPELINE FINISHED")
+    logger.success("API INGESTION PIPELINE FINISHED")
     logger.info("=" * 80)
 
 if __name__ == "__main__":

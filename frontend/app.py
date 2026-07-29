@@ -2,9 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# ---------------------------------------------------
 # Configuration
-# ---------------------------------------------------
 
 st.set_page_config(
     page_title="University Data Platform",
@@ -14,9 +12,7 @@ st.set_page_config(
 
 API_URL = "http://localhost:8000/search"
 
-# ---------------------------------------------------
 # Style
-# ---------------------------------------------------
 
 st.markdown(
     """
@@ -54,18 +50,14 @@ st.markdown(
 
 st.markdown("---")
 
-# ---------------------------------------------------
 # Barre de recherche
-# ---------------------------------------------------
 
 query = st.text_input(
     "",
     placeholder="Tapez un mot-clé puis appuyez sur Entrée..."
 )
 
-# ---------------------------------------------------
 # Recherche
-# ---------------------------------------------------
 
 if query.strip():
 
