@@ -20,9 +20,7 @@ from jobs.common.exceptions import SourceAPIHTTPError
 from jobs.common.logger import logger
 from jobs.common.playwright_client import PlaywrightBrowserSession
 
-# ============================================================
 # CONFIGURATION — ADRESSES DES FACULTÉS (HASSAN II CASABLANCA)
-# ============================================================
 TARGETS = {
     "fsac":"https://fsac.univh2c.ma/"
 }
@@ -39,9 +37,7 @@ HEADERS = {
 }
 
 
-# ============================================================
 # UTILITIES
-# ============================================================
 
 def compute_checksum(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
@@ -53,9 +49,7 @@ def sanitize_file_name(name: str) -> str:
     return re.sub(r'-+', '-', name).strip('-')
 
 
-# ============================================================
 # CRAWLER HYBRIDE : PLAYWRIGHT + RECURSIVITÉ BFS
-# ============================================================
 
 def get_links_recursive(session: PlaywrightBrowserSession, root_url: str) -> list:
     """
@@ -142,22 +136,22 @@ def get_links_recursive(session: PlaywrightBrowserSession, root_url: str) -> lis
                             queue.append(full_url)
 
         except Exception as e:
-            logger.warning(f"  ⚠️ Erreur sur {current_page} : {type(e).__name__}: {e}")
+            logger.warning(f" Erreur sur {current_page} : {type(e).__name__}: {e}")
             continue
 
     page.close()
     logger.info(
-        f"🎯 Fin du crawl hybride. {pages_crawled_count} pages lues. {len(extracted_elements)} document(s) trouvé(s).")
+        f"Fin du crawl hybride. {pages_crawled_count} pages lues. {len(extracted_elements)} document(s) trouvé(s).")
     return extracted_elements
 
 
 def scrape_and_store_all():
     logger.info("=" * 70)
-    logger.info("🚀 DÉBUT DE L'EXTRACTION PIPELINE HYBRIDE COMPLÈTE")
+    logger.info(" DÉBUT DE L'EXTRACTION PIPELINE HYBRIDE COMPLÈTE")
     logger.info("=" * 70)
     client = MinioStorageClient()
     if not client.check_connection():
-        logger.critical("💥 Liaison avec le Data Lake MinIO rompue.")
+        logger.critical("Liaison avec le Data Lake MinIO rompue.")
         raise SourceAPIHTTPError("MinIO indisponible.")
 
     target_bucket = settings.MINIO_RAW_BUCKET_DOCUMENTS
@@ -169,11 +163,11 @@ def scrape_and_store_all():
     # Utilisation du Context Manager de la couche common pour ouvrir le navigateur UNE SEULE FOIS
     with PlaywrightBrowserSession() as session:
         for university_code, url in TARGETS.items():
-            logger.info(f"🔍 Initialisation de la campagne sur : [{university_code}] -> {url}")
+            logger.info(f"Initialisation de la campagne sur : [{university_code}] -> {url}")
             elements = get_links_recursive(session, url)
 
             if not elements:
-                logger.warning(f"⚠️ Aucun document découvert sur l'ensemble de l'arborescence de {university_code}")
+                logger.warning(f"Aucun document découvert sur l'ensemble de l'arborescence de {university_code}")
                 continue
 
             for item in elements:
@@ -234,13 +228,13 @@ def scrape_and_store_all():
                         ContentType="application/json"
                     )
                     total_files += 1
-                    logger.success(f"  ✅ [Bronze] {short_id}_{safe_name} synchronisé.")
+                    logger.success(f" [Bronze] {short_id}_{safe_name} synchronisé.")
 
                 except Exception as e:
-                    logger.error(f"  ❌ Échec d'écriture pour l'URL {file_url} : {e}")
+                    logger.error(f" Échec d'écriture pour l'URL {file_url} : {e}")
 
     logger.info("=" * 70)
-    logger.success(f"🎉 Extraction terminée : {total_files} documents enregistrés dans {target_bucket}.")
+    logger.success(f"Extraction terminée : {total_files} documents enregistrés dans {target_bucket}.")
     logger.info("=" * 70)
 
 

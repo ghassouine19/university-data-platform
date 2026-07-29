@@ -28,23 +28,19 @@ class Settings(BaseSettings):
         extra="ignore",  # Ignore les variables d'environnement système inutiles
     )
 
-    # ==========================================
     # CONFIGURATION GLOBALE
-    # ==========================================
     PROJECT_NAME: str = "university-data-platform"
     APP_ENV: str = "dev"
     DEBUG: bool = True
 
-    # ==========================================
     # DATA LAKE (MINIO)
-    # ==========================================
     MINIO_ROOT_USER: str
     MINIO_ROOT_PASSWORD: str
     MINIO_ENDPOINT: str
     MINIO_API_PORT: int = 9000
     MINIO_CONSOLE_PORT: int = 9001
 
-    # Vos 5 buckets de l'architecture
+    # Nos 5 buckets de l'architecture
     MINIO_RAW_BUCKET_WEB: str
     MINIO_RAW_BUCKET_JSON: str
     MINIO_RAW_BUCKET_IMAGES: str
@@ -52,26 +48,20 @@ class Settings(BaseSettings):
     MINIO_RAW_BUCKET_LOGS: str
     MINIO_CURATED_BUCKET: str
 
-    # ==========================================
     # DATABASE & CATALOG (POSTGRESQL & HIVE)
-    # ==========================================
     POSTGRES_DB: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_PORT: int = 5432
     HIVE_METASTORE_PORT: int = 9083
 
-    # ==========================================
     # MOTEUR DE RECHERCHE & ORCHESTRATION
-    # ==========================================
     ELASTIC_PORT: int = 9200
     ELASTIC_USER: str
     ELASTIC_PASSWORD: str
     AIRFLOW_PORT: int = 8082
 
-    # ==========================================
     # SECURITÉ API
-    # ==========================================
     API_PORT: int = 8000
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"

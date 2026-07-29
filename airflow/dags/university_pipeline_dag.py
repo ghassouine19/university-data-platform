@@ -1,5 +1,3 @@
-# airflow/dags/university_pipeline_dag.py
-
 import sys
 from datetime import datetime, timedelta
 

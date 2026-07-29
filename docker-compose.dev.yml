@@ -65,10 +65,7 @@ services:
       retries: 5
 
 
-  # Hive Metastore (Catalog)
-  # ==========================================
   # Hive Metastore (Catalog - CONFIGURATION DIRECTE ET STABLE)
-  # ==========================================
   hive-metastore:
     image: apache/hive:3.1.3
     container_name: ${PROJECT_NAME}_hive_metastore
@@ -379,7 +376,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       APP_ENV: ${APP_ENV}
       SPARK_DRIVER_MEMORY: 2g
-      SPARK_EXECUTOR_MEMORY: 4g          # doit correspondre à SPARK_WORKER_MEMORY
+      SPARK_EXECUTOR_MEMORY: 4g
       SPARK_EXECUTOR_CORES: 2
       SPARK_NETWORK_TIMEOUT: 600s
       SPARK_EXECUTOR_HEARTBEATINTERVAL: 60s

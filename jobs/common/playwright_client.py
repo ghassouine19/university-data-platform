@@ -1,4 +1,3 @@
-# jobs/common/playwright_client.py
 from playwright.sync_api import sync_playwright
 from jobs.common.logger import logger
 
@@ -12,7 +11,7 @@ class PlaywrightBrowserSession:
 
     def __enter__(self):
         """Démarre le navigateur unique lors de l'entrée dans le bloc contextuel."""
-        logger.info("🎭 Initialisation du moteur Playwright unique pour la session...")
+        logger.info("Initialisation du moteur Playwright unique pour la session...")
         self._playwright = sync_playwright().start()
         self.browser = self._playwright.chromium.launch(headless=True)
         # Simulation d'un navigateur standard pour éviter les blocages de sécurité
@@ -33,7 +32,7 @@ class PlaywrightBrowserSession:
             page.goto(url, timeout=20000, wait_until="networkidle")
             return page.content()
         except Exception as e:
-            logger.warning(f"⚠️ Erreur de rendu Playwright sur {url} : {e}")
+            logger.warning(f"Erreur de rendu Playwright sur {url} : {e}")
             return ""
         finally:
             if page:
@@ -41,7 +40,7 @@ class PlaywrightBrowserSession:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Ferme proprement le navigateur unique à la fin du script."""
-        logger.info("🛑 Fermeture de la session globale Playwright.")
+        logger.info("Fermeture de la session globale Playwright.")
         if self.browser:
             self.browser.close()
         if self._playwright:

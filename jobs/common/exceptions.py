@@ -15,9 +15,7 @@ class UniversityPlatformException(Exception):
         return self.message
 
 
-# ==========================================
 # 1. INFRASTRUCTURE & DATA LAKE EXCEPTIONS
-# ==========================================
 class DataLakeConfigurationError(UniversityPlatformException):
     """Levée lorsque les variables d'accès à MinIO sont incorrectes."""
     pass
@@ -33,9 +31,7 @@ class DataLakeBucketNotFoundError(UniversityPlatformException):
     pass
 
 
-# ==========================================
 # 2. INGESTION & SOURCING EXCEPTIONS
-# ==========================================
 class SourceAPIConnectionError(UniversityPlatformException):
     """Levée lorsque l'API externe d'une université ne répond pas."""
     pass
@@ -51,17 +47,13 @@ class ScrapingExtractionError(UniversityPlatformException):
     pass
 
 
-# ==========================================
 # 3. DATA QUALITY & GOVERNANCE EXCEPTIONS
-# ==========================================
 class DataQualityValidationError(UniversityPlatformException):
     """Levée si une donnée brute viole le contrat de schéma (metadata.py)."""
     pass
 
 
-# ==========================================
 # 4. PROCESSING & SPARK EXCEPTIONS
-# ==========================================
 class SparkJobExecutionError(UniversityPlatformException):
     """Levée lorsqu'un traitement lourd ou une action PySpark échoue."""
     pass

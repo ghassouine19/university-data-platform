@@ -49,7 +49,7 @@ def _normalize_openalex_struct(df, struct_col: str):
 def read_raw_and_metadata(spark: SparkSession, source_prefix: str, raw_schema=None, metadata_schema=None):
     bucket = settings.MINIO_RAW_BUCKET_JSON
     base_path = f"s3a://{bucket}/{source_prefix}/"
-    logger.info(f"📥 Listage récursif des fichiers sous {base_path}")
+    logger.info(f"Listage récursif des fichiers sous {base_path}")
 
     all_paths = _list_files(spark, base_path)
     logger.info(f"   → {len(all_paths)} fichiers trouvés.")
@@ -58,7 +58,7 @@ def read_raw_and_metadata(spark: SparkSession, source_prefix: str, raw_schema=No
     meta_paths = [p for p in all_paths if ".metadata." in p]
 
     if not raw_paths:
-        raise RuntimeError(f"❌ Aucun fichier RAW trouvé sous {base_path}")
+        raise RuntimeError(f"Aucun fichier RAW trouvé sous {base_path}")
 
     # Lecture robuste en texte (évite COLUMN_ALREADY_EXISTS de l'inférence json)
     raw_text = (
@@ -109,7 +109,7 @@ def read_raw_and_metadata(spark: SparkSession, source_prefix: str, raw_schema=No
 
     if raw_count == 0:
         raise RuntimeError(
-            f"❌ Aucune donnée RAW lue pour '{source_prefix}'. Vérifie le format JSON source."
+            f"Aucune donnée RAW lue pour '{source_prefix}'. Vérifie le format JSON source."
         )
 
     return raw_df, meta_df

@@ -6,7 +6,7 @@ for _parent in Path(__file__).resolve().parents:
         sys.path.insert(0, str(_parent))
         break
 else:
-    raise RuntimeError("❌ Impossible de localiser le dossier 'jobs/'.")
+    raise RuntimeError("Impossible de localiser le dossier 'jobs/'.")
 
 from pyspark.sql import functions as F
 from pyspark.sql.types import ArrayType, StringType
@@ -66,9 +66,9 @@ def transform_publications():
     raw_paths = [p for p in all_paths if ".metadata." not in p]
     meta_paths = [p for p in all_paths if ".metadata." in p]
 
-    logger.info(f"📂 RAW files: {len(raw_paths)} | META files: {len(meta_paths)}")
+    logger.info(f"RAW files: {len(raw_paths)} | META files: {len(meta_paths)}")
     if not raw_paths:
-        raise RuntimeError("❌ Aucun fichier RAW openalex trouvé.")
+        raise RuntimeError("Aucun fichier RAW openalex trouvé.")
 
     # 1) Lire en texte ligne par ligne
     lines_df = spark.read.text(raw_paths).withColumn("_file_path", F.input_file_name())
@@ -113,7 +113,7 @@ def transform_publications():
     raw_df = direct_df.unionByName(wrapped_df, allowMissingColumns=True)
 
     raw_count = raw_df.count()
-    logger.info(f"✅ Raw parsed rows: {raw_count}")
+    logger.info(f"Raw parsed rows: {raw_count}")
     if raw_count == 0:
         raise RuntimeError("❌ 0 lignes RAW parsées (id null partout).")
 
@@ -124,7 +124,7 @@ def transform_publications():
         else spark.createDataFrame([], BRONZE_API_METADATA_SCHEMA)
     ).withColumn("_file_key", _file_key_from_path(F.input_file_name()))
 
-    logger.info(f"✅ Metadata rows: {meta_df.count()}")
+    logger.info(f"Metadata rows: {meta_df.count()}")
 
     # 6) Join raw + metadata
     enriched_df = join_raw_with_metadata(raw_df, meta_df, how="left")
@@ -191,9 +191,9 @@ def transform_publications():
     silver_df = validate_uniqueness(silver_df, BUSINESS_KEYS["research_publications"])
 
     final_count = silver_df.count()
-    logger.info(f"✅ Silver final rows: {final_count}")
+    logger.info(f"Silver final rows: {final_count}")
     if final_count == 0:
-        raise RuntimeError("❌ 0 lignes finales après validation.")
+        raise RuntimeError("0 lignes finales après validation.")
 
     # 11) Write Hudi (Hive Sync OFF temporaire)
     write_hudi(
@@ -211,7 +211,7 @@ def transform_publications():
     target = f"s3a://{settings.MINIO_CURATED_BUCKET}/silver/publications/"
     silver_df.write.mode("overwrite").partitionBy("publication_year", "university_name").parquet(target)
 
-    logger.success("🎉 Pipeline Silver Publications terminé avec succès.")
+    logger.success("Pipeline Silver Publications terminé avec succès.")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,6 @@
-# jobs/common/metadata.py
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType, ArrayType, DateType, TimestampType
 
-# ==============================================================================
-# 📥 1. SCHÉMAS BRONZE (ENTRÉE) : POUR LES FICHIERS DE MÉTADONNÉES D'AUDIT
-# ==============================================================================
+# 1. SCHÉMAS BRONZE (ENTRÉE) : POUR LES FICHIERS DE MÉTADONNÉES D'AUDIT
 # (Déjà défini à l'étape précédente pour les documents scrapés)
 BRONZE_DOCUMENT_METADATA_SCHEMA = StructType([
     StructField("record_id", StringType(), False),
@@ -45,8 +42,7 @@ BRONZE_API_METADATA_SCHEMA = StructType([
     StructField("is_deleted", BooleanType(), True)
 ])
 
-# ==============================================================================
-# 📥 2. SCHÉMAS BRONZE (ENTRÉE) : POUR LES JSON BRUTS DES APIS SCIENTIFIQUES
+# 2. SCHÉMAS BRONZE (ENTRÉE) : POUR LES JSON BRUTS DES APIS SCIENTIFIQUES
 
 # B. Schéma d'entrée complet pour l'API Crossref (Structure imbriquée de votre analyse)
 BRONZE_CROSSREF_INPUT_SCHEMA = StructType([
@@ -114,9 +110,7 @@ BRONZE_OPENALEX_INPUT_SCHEMA = StructType([
 ])
 
 
-# ==============================================================================
 # SCHÉMA BRONZE (ENTRÉE) : POUR LES PROFILS CHERCHEURS INDIVIDUELS ORCID
-# ==============================================================================
 
 BRONZE_ORCID_INPUT_SCHEMA = StructType([
     # 1. Identifiant Unique ORCID (orcid-identifier -> path)
@@ -170,9 +164,7 @@ BRONZE_ORCID_INPUT_SCHEMA = StructType([
     ]), True)
 ])
 
-# ==============================================================================
 #  SCHÉMA SILVER (SORTIE) : research_publications
-# ==============================================================================
 # Schéma unifié cible après fusion OpenAlex + Crossref, utilisé pour valider
 # le DataFrame final avant écriture Hudi (transform_publications.py).
 SILVER_PUBLICATIONS_SCHEMA = StructType([
